@@ -1,5 +1,7 @@
 import os
 import time
+import re
+import json
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -77,8 +79,6 @@ else:
     print("CAPTCHA não está presente na página.")
 #---------------------------------------------
 
-
-
 # Coleta o conteúdo HTML da nova página
 element = WebDriverWait(driver, 20).until(
     EC.presence_of_element_located((By.XPATH, '//section[@class="sc-b281498b-0 jQVtEv"]'))
@@ -124,6 +124,11 @@ else:
 def normalize_unicode(text):
     return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
 
+# Função para extrair apenas o número de uma string
+def extract_number(text):
+    match = re.search(r'\d+,\d+', text)
+    return match.group() if match else '0,00'
+
 # Normaliza e decodifica sequências de escape Unicode
 title_text = normalize_unicode(title_text)
 date_text = normalize_unicode(date_text)
@@ -131,6 +136,10 @@ value_text = normalize_unicode(value_text)
 location_text = normalize_unicode(location_text)
 description_text = normalize_unicode(description_text)
 
+# Extrair apenas o número do valor
+value_text = extract_number(value_text)
+
+# Dados a serem inseridos
 data = [{
     'title': title_text,
     'date': date_text,
@@ -141,8 +150,6 @@ data = [{
     'validate_link': validate_link
 }]
 
-print(data)
-
 # Converte a lista de dicionários para um DataFrame
 data_df = pd.DataFrame(data)
 
@@ -151,7 +158,7 @@ data_dict = data_df.to_dict('records')
 
 driver.quit()
 
+# Salva os dados em um arquivo JSON
 js = json.dumps(data_dict)
-fp = open('data.json', 'w')
-fp.write(js)
-fp.close()
+with open('data.json', 'w') as fp:
+    fp.write(js)
