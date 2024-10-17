@@ -1,12 +1,15 @@
+import os
 import time
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from anticaptchaofficial.recaptchav2proxyless import *
 from dotenv import load_dotenv
-import os
+from bs4 import BeautifulSoup
+import pandas as pd
+import unicodedata
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -34,7 +37,6 @@ evento.click()
 # Coleta a nova URL
 new_url = driver.current_url
 
-
 # Resolver reCAPTCHA v2 (exemplo com 2Captcha)
 solver = recaptchaV2Proxyless()
 solver.set_verbose(1) 
@@ -43,27 +45,113 @@ solver.set_verbose(1)
 api_key = os.getenv('API_KEY')
 website_key = os.getenv('WEBSITE_KEY')
 
-# Usa a API key no solver
-solver.set_key(api_key)
-solver.set_website_url(new_url)
-solver.set_website_key(website_key)
-solver.set_soft_id(0)
+#---------------------------------------------
+# Função para verificar se o CAPTCHA está presente
+def is_captcha_present(driver):
+    try:
+        driver.find_element(By.ID, 'captcha-element-id')
+        return True
+    except NoSuchElementException:
+        return False
 
-g_response = solver.solve_and_return_solution()
-time.sleep(5) 
+# Verificar se o CAPTCHA está presente
+if is_captcha_present(driver):
+    # Código para resolver o CAPTCHA
+    solver.set_key(api_key)
+    solver.set_website_url(driver.current_url)
+    solver.set_website_key(website_key)
+    solver.set_soft_id(0)
 
-if g_response != 0:
-    print(g_response)
+    g_response = solver.solve_and_return_solution()
+    time.sleep(5)
+
+    if g_response != 0:
+        print(g_response)
+        # Inserir a resposta do CAPTCHA no campo apropriado
+        captcha_response_field = driver.find_element(By.ID, 'captcha-element-id')
+        captcha_response_field.send_keys(g_response)
+    else:
+        print(solver.error_code)
+        time.sleep(5)
 else:
-    print(solver.error_code)
-    time.sleep(5) 
+    print("CAPTCHA não está presente na página.")
+#---------------------------------------------
+
 
 
 # Coleta o conteúdo HTML da nova página
 element = WebDriverWait(driver, 20).until(
-    EC.presence_of_element_located((By.XPATH, '//section[@class="sc-b281498b-0 jQVtEv"] | //section[@class="sc-b281498b-0 ilWENo"]'))
+    EC.presence_of_element_located((By.XPATH, '//section[@class="sc-b281498b-0 jQVtEv"]'))
 )
+
+element2 = WebDriverWait(driver, 20).until(
+    EC.presence_of_element_located((By.XPATH, '//section[@class="sc-b281498b-0 ilWENo"]'))
+)
+
 html_content = element.get_attribute('outerHTML')
-print(html_content)
+html_content2 = element2.get_attribute('outerHTML')
+
+soup = BeautifulSoup(html_content, 'html.parser')
+title_text = soup.find('h1').get_text() if soup.find('h1') else 'H1 não encontrado'
+
+date_text = soup.find('div', class_='sc-983ba91-1 cZLMzD')
+date_text = date_text.get_text() if date_text else 'Data não encontrada'
+
+value_text = soup.find('div', class_='sc-28aed0db-2 kUkoAR')
+value_text = value_text.get_text() if value_text else 'Valor não encontrado'
+
+location_text = soup.find('div', class_='sc-983ba91-2 sc-983ba91-3 leDNYU')
+location_text = location_text.get_text() if location_text else 'Localização não encontrada'
+
+purchase_link = new_url
+validate_link = new_url
+
+if html_content2:
+    soup2 = BeautifulSoup(html_content2, 'html.parser')
     
+    # Encontra as duas divs que contêm os elementos p
+    divs = soup2.find_all('div', class_='sc-575bb398-0 emgExH')
+    
+    # Extrai o texto de todos os elementos p dentro das divs
+    p_texts = [p.get_text() for div in divs for p in div.find_all('p')]
+    
+    # Junta os textos dos elementos p em uma única string
+    description_text = ' '.join(p_texts) if p_texts else 'P não encontrado'
+else:
+    description_text = 'HTML content2 não encontrado'
+
+# Função para normalizar e decodificar sequências de escape Unicode
+def normalize_unicode(text):
+    return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
+
+# Normaliza e decodifica sequências de escape Unicode
+title_text = normalize_unicode(title_text)
+date_text = normalize_unicode(date_text)
+value_text = normalize_unicode(value_text)
+location_text = normalize_unicode(location_text)
+description_text = normalize_unicode(description_text)
+
+data = [{
+    'title': title_text,
+    'date': date_text,
+    'value': value_text,
+    'location': location_text,
+    'description': description_text,
+    'purchase_link': purchase_link,
+    'validate_link': validate_link
+}]
+
+print(data)
+
+# Converte a lista de dicionários para um DataFrame
+data_df = pd.DataFrame(data)
+
+# Converte o DataFrame para uma lista de dicionários
+data_dict = data_df.to_dict('records')
+
 driver.quit()
+
+js = json.dumps(data_dict)
+fp = open('data.json', 'w')
+fp.write(js)
+fp.close()
