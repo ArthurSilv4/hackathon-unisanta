@@ -39,7 +39,7 @@ print(qtd_events)
 
 data = []
 
-for i in range(1, ultima_pagina + 1):
+for i in range(1, 4 + 1):
     # Formatar o XPath corretamente
     xpath = f'//div[@class="CustomGridstyle__CustomGridCardType-sc-1ce1n9e-2 jMNblV"]//a[@class="EventCardstyle__CardLink-sc-1rkzctc-3 eDXoFM sympla-card" and @data-position="{i}"]'
 
