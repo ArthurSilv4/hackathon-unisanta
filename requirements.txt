@@ -1,0 +1,7 @@
+selenium
+anticaptchaofficial
+python-dotenv
+beautifulsoup4
+pandas
+flask
+pyodbc
