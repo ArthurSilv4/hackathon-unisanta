@@ -5,6 +5,10 @@ O projeto consiste em uma API que coleta dados de eventos do site Sympla nas cid
 
 A API retorna as informações em formato JSON, facilitando a integração com outras plataformas e aplicações.
 
+# Demonstração
+
+[![Assista ao vídeo](/video/ZeroLoop%20-%20Hackathon.mp4)]
+
 # Tecnologias utilizadas
 - Python
 - Selenium
