@@ -7,7 +7,7 @@ A API retorna as informações em formato JSON, facilitando a integração com o
 
 # Demonstração
 
-[![Assista ao vídeo](/video/ZeroLoop%20-%20Hackathon.mp4)]
+![Assista ao vídeo](/video/de%20ZeroLoop%20-%20Hackathon.gif)
 
 # Tecnologias utilizadas
 - Python
