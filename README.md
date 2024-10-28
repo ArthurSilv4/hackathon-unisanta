@@ -1,6 +1,10 @@
 
 # Sobre o projeto
 
+Conquistei o 3º lugar ao resolver um problema enfrentado 
+pelo site Juicy Santos, que inseria manualmente os dados dos eventos da Baixada Santista. Desenvolvi uma 
+automação capaz de coletar essas informações automaticamente de sites de eventos.
+
 O projeto consiste em uma API que coleta dados de eventos do site Sympla nas cidades de Santos, São Vicente e Guarujá por meio de web scraping. 
 
 A API retorna as informações em formato JSON, facilitando a integração com outras plataformas e aplicações.
